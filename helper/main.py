@@ -73,9 +73,15 @@ class P1(ft.Container):
 
     def disableds(self):
         self.汉字.disabled = True
-        self.声母.disabled = not self.声母.disabled
-        self.韵母.disabled = not self.韵母.disabled
-        self.声调.disabled = not self.声调.disabled
+        self.声母.disabled = True
+        self.韵母.disabled = True
+        self.声调.disabled = True
+
+    def enables(self):
+        self.汉字.disabled = True
+        self.声母.disabled = False
+        self.韵母.disabled = False
+        self.声调.disabled = False
 
 
 num2tone = {1: 'ˉ', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ', 5: ' '}
@@ -84,8 +90,8 @@ num2tone = {1: 'ˉ', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ', 5: ' '}
 class P2(ft.Row):
 
     def get_pinyin(self, 成语):
-        sm = [i[0] for i in py.pinyin(成语, style=py.Style.INITIALS, heteronym=True, strict=False)]
-        ym_t = [[i[0][:-1], i[0][-1]] for i in
+        sm = [i[0] if i[0] else ' ' for i in py.pinyin(成语, style=py.Style.INITIALS, heteronym=True, strict=False) ]
+        ym_t = [[i[0][:-1], i[0][-1]] if i[0][:-1] else [i[0][-1],5] for i in
                 py.pinyin(成语, style=py.Style.FINALS_TONE3, heteronym=True, strict=False)]
         c = []
         for i, ii, iii in zip(sm, ym_t, 成语):
@@ -109,6 +115,10 @@ class P2(ft.Row):
         for i in self.c:
             i.disableds()
 
+    def enables(self):
+        for i in self.c:
+            i.enables()
+
 
 # now=''
 def main(page: ft.Page):
@@ -118,9 +128,9 @@ def main(page: ft.Page):
         now = inputs.value
         if len(now) == 4 and all('\u4e00' <= i <= '\u9fff' for i in now):
             display.updates(now)
-            display.disableds()
+            display.enables()
             submit.disabled = False
-            sbutton.disabled = True
+            # sbutton.disabled = True
             page.update()
 
     def submit_click(e):
