@@ -26,8 +26,9 @@ class text_button(ft.CupertinoFilledButton):
             case ButtonState.不存在:
                 self.stat = ButtonState.不确定位置
                 self._text.color = '#ffDE7525'
-        print(self.stat)
-        args[0].page.update()
+        # print(self.stat)
+        # args[0].page.update()
+        self.update()
 
     def __init__(self, text, width, height, size=40):  # 显示文字
         super().__init__(opacity_on_click=0.8, on_click=self.my_click)
@@ -46,6 +47,20 @@ class text_button(ft.CupertinoFilledButton):
         self._text.color = '#ff5D6673'
         self._text.update()
         self.stat = ButtonState.未定义
+
+
+class TextBox(ft.CupertinoFilledButton):
+
+    def __init__(self, click, text, width, height, size=40):  # 显示文字
+        self.click = click
+        super().__init__(opacity_on_click=0.8, on_click=lambda e: click(self._text.value))
+        self._text = ft.Text(text, size=size, font_family='sf')
+        self.content = self._text
+        self.padding = 0
+        self.width = width
+        self.height = height
+        self.bgcolor = ft.colors.GREY_200
+        self._text.color = '#ff5D6673'
 
 
 class P1(ft.Container):
@@ -87,11 +102,11 @@ class P1(ft.Container):
 num2tone = {1: 'ˉ', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ', 5: ' '}
 
 
-class P2(ft.Row):
+class P2(ft.Container):
 
     def get_pinyin(self, 成语):
-        sm = [i[0] if i[0] else ' ' for i in py.pinyin(成语, style=py.Style.INITIALS, heteronym=True, strict=False) ]
-        ym_t = [[i[0][:-1], i[0][-1]] if i[0][:-1] else [i[0][-1],5] for i in
+        sm = [i[0] if i[0] else ' ' for i in py.pinyin(成语, style=py.Style.INITIALS, heteronym=True, strict=False)]
+        ym_t = [[i[0][:-1], i[0][-1]] if i[0][:-1] else [i[0][-1], 5] for i in
                 py.pinyin(成语, style=py.Style.FINALS_TONE3, heteronym=True, strict=False)]
         c = []
         for i, ii, iii in zip(sm, ym_t, 成语):
@@ -103,7 +118,12 @@ class P2(ft.Row):
 
         for i, ii, iii, iiii in self.get_pinyin(成语):
             self.c.append(P1(汉字=i, 声母=ii, 韵母=iii, 声调=iiii))
-        super().__init__(self.c, alignment=ft.MainAxisAlignment.CENTER, spacing=10)
+        super().__init__()
+        self.content = ft.Column(
+                [ft.Row(self.c[:2], alignment=ft.MainAxisAlignment.CENTER, spacing=10),
+                 ft.Row(self.c[2:], alignment=ft.MainAxisAlignment.CENTER, spacing=10), ], spacing=5,
+                alignment=ft.MainAxisAlignment.CENTER
+        )
 
     def updates(self, 成语):
         for index, value in enumerate(self.get_pinyin(成语)):
@@ -120,12 +140,15 @@ class P2(ft.Row):
             i.enables()
 
 
-# now=''
 def main(page: ft.Page):
-    def q(e):
+    def 开始修改(text):
         # global now
         nonlocal display
-        now = inputs.value
+        if type(text) is str:
+            now = text
+        else:
+            now = inputs.value
+
         if len(now) == 4 and all('\u4e00' <= i <= '\u9fff' for i in now):
             display.updates(now)
             display.enables()
@@ -133,14 +156,25 @@ def main(page: ft.Page):
             # sbutton.disabled = True
             page.update()
 
-    def submit_click(e):
+    def 确认修改(e):
         nonlocal display
         display.disableds()
         submit.disabled = True
         sbutton.disabled = False
+        """
+        放搜索的部分
+        """
+        更新列表(e)
         page.update()
 
-    page.title = "Hello World"
+    def 更新列表(e):
+        nonlocal lv
+        lv.controls.clear()
+        for i in ['风声鹤唳', '草木皆兵', '一板一眼', '一鼓作气', '凄凄切切']:
+            lv.controls.append(TextBox(text=str(i), click=开始修改, width=50, height=50))
+        lv.update()
+
+    page.title = "春日影"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.fonts = {
@@ -152,13 +186,16 @@ def main(page: ft.Page):
     display = P2("武运昌隆")
     display.disableds()
     inputs = ft.TextField(label="输入成语", width=200, height=50, )
-    submit = ft.ElevatedButton(text="修改完成", disabled=True, on_click=submit_click)
-    sbutton = ft.ElevatedButton(text="确认", on_click=q)
+    submit = ft.ElevatedButton(text="修改完成", disabled=True, on_click=确认修改)
+    sbutton = ft.ElevatedButton(text="确认", on_click=开始修改)
+    lv = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=False)
+
     page.add(
             display,
             ft.Row([inputs, sbutton], alignment=ft.MainAxisAlignment.CENTER, spacing=10),
             ft.Row([submit], alignment=ft.MainAxisAlignment.CENTER, spacing=10),
-
+            ft.Divider(height=9, thickness=3),
+            lv
     )
 
 
